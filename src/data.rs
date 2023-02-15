@@ -68,10 +68,27 @@ impl<'de> Deserialize<'de> for LogSeverity {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct K8SContainerResource {
+    pub project_id: String,
+    pub cluster_name: String,
+    pub namespace_name: String,
+    pub container_name: String,
+    pub pod_name: String
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "type", content = "labels")]
+pub enum Resource {
+    #[serde(rename(deserialize = "k8s_container"))]
+    K8SContainer(K8SContainerResource)
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEntry {
     #[serde(default)]
     pub text_payload: String,
+    pub resource: Resource,
     pub timestamp: String,
     pub severity: LogSeverity,
     pub log_name: String,
