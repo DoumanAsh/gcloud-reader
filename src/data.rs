@@ -41,6 +41,13 @@ impl LogSeverity {
     }
 }
 
+impl Default for LogSeverity {
+    #[inline(always)]
+    fn default() -> Self {
+        Self::Default
+    }
+}
+
 struct LogSeverityVisitor;
 
 impl<'de> serde::de::Visitor<'de> for LogSeverityVisitor {
@@ -77,10 +84,19 @@ pub struct K8SContainerResource {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct CloudRunRevision {
+    pub location: String,
+    pub project_id: String,
+    pub service_name: String,
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(tag = "type", content = "labels")]
 pub enum Resource {
     #[serde(rename(deserialize = "k8s_container"))]
-    K8SContainer(K8SContainerResource)
+    K8SContainer(K8SContainerResource),
+    #[serde(rename(deserialize = "cloud_run_revision"))]
+    CloudRunRevision(CloudRunRevision),
 }
 
 #[derive(Deserialize, Debug)]
@@ -90,6 +106,7 @@ pub struct LogEntry {
     pub text_payload: String,
     pub resource: Resource,
     pub timestamp: String,
+    #[serde(default)]
     pub severity: LogSeverity,
     pub log_name: String,
     #[serde(default)]
