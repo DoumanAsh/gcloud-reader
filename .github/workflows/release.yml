@@ -79,3 +79,50 @@ jobs:
         $event = Get-Content -Raw -Path $env:GITHUB_EVENT_PATH | ConvertFrom-Json;
         $url = "https://uploads.github.com/repos/$($env:GITHUB_REPOSITORY)/releases/$($event.release.id)/assets?name=gcloud-reader-${{runner.os}}.zip";
         Invoke-WebRequest -Headers $headers -Method POST -Infile gcloud-reader-${{runner.os}}.zip -ContentType 'application/zip' -Uri $url
+
+  build-apple-aarch64:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        target: [aarch64-apple-darwin]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install Rust Unix
+      run: |
+        if rustup --version >/dev/null 2>&1; then
+            rustup update
+        else
+             curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain stable
+             echo ::add-path::$HOME/.cargo/bin
+        fi
+    - name: Rust version
+      run: |
+        cargo --version
+        rustc --version
+    - name: Available SDK
+      run: xcodebuild -showsdks
+
+    - name: Install rust target
+      run: rustup target add ${{matrix.target}}
+
+    - name: Build release
+      run: SDKROOT=$(xcrun -sdk macosx11.1 --show-sdk-path) MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx11.1 --show-sdk-platform-version)  cargo build --release --target ${{matrix.target}}
+      env:
+        RUSTFLAGS: '-C link-arg=-s'
+
+    - name: Pack
+      run: zip -j gcloud-reader-${{matrix.target}}.zip target/${{matrix.target}}/release/gcloud-reader
+
+    - name: Upload to release Unix
+      run: |
+        curl \
+          -f \
+          -sSL \
+          -XPOST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/zip" \
+          --upload-file "gcloud-reader-${{matrix.target}}.zip" \
+          "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets?name=gcloud-reader-${{matrix.target}}.zip"
