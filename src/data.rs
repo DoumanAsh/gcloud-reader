@@ -50,7 +50,7 @@ impl Default for LogSeverity {
 
 struct LogSeverityVisitor;
 
-impl<'de> serde::de::Visitor<'de> for LogSeverityVisitor {
+impl serde::de::Visitor<'_> for LogSeverityVisitor {
     type Value = LogSeverity;
 
     #[inline(always)]
@@ -74,7 +74,7 @@ impl<'de> Deserialize<'de> for LogSeverity {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(serde_derive::Deserialize, Debug)]
 pub struct K8SContainerResource {
     pub project_id: String,
     pub cluster_name: String,
@@ -83,14 +83,14 @@ pub struct K8SContainerResource {
     pub pod_name: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(serde_derive::Deserialize, Debug)]
 pub struct CloudRunRevision {
     pub location: String,
     pub project_id: String,
     pub service_name: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(serde_derive::Deserialize, Debug)]
 #[serde(tag = "type", content = "labels")]
 pub enum Resource {
     #[serde(rename(deserialize = "k8s_container"))]
@@ -99,7 +99,7 @@ pub enum Resource {
     CloudRunRevision(CloudRunRevision),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(serde_derive::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEntry {
     #[serde(default)]
@@ -276,7 +276,7 @@ impl<T: io::Read> Iterator for LogEntryIter<T> {
 impl<T: io::Read> io::Read for LogEntryIter<T> {
     fn read(&mut self, mut out: &mut [u8]) -> io::Result<usize> {
         let read_buffer = &self.buffer[self.buffer_offset..];
-        if read_buffer.len() > 0 {
+        if !read_buffer.is_empty() {
             let read_size = cmp::min(read_buffer.len(), out.len());
             out[..read_size].copy_from_slice(&read_buffer[..read_size]);
             self.buffer_offset += read_size;

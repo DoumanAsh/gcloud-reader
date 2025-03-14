@@ -14,17 +14,17 @@ include = [
 repository = "https://github.com/DoumanAsh/gcloud-reader"
 readme = "README.md"
 
-[dependencies.serde]
-version = "1"
-features = ["derive"]
-
 [dependencies]
 serde_json = "1"
-arg = "0.4"
-c-ffi = "0.4.6"
+serde = "1"
+serde_derive = "1"
+
+[dependencies.arg]
+version = "0.4"
+features = ["std"]
 
 [profile.release]
-lto = true
+lto = 'thin'
 opt-level = "z"
 codegen-units = 1
 strip = true

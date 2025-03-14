@@ -1,14 +1,9 @@
-#![no_main]
+use std::process::ExitCode;
 
-use gcloud_reader::cli::Cli;
+use gcloud_reader::cli::args;
 
-c_ffi::c_main!(rust_main);
-
-fn rust_main(args: c_ffi::Args) -> bool {
-    let args = match Cli::new(args.into_iter().skip(1)) {
-        Ok(args) => args,
-        Err(code) => return code,
-    };
+fn main() -> ExitCode {
+    let args = args();
 
     let mut count = 0;
     for path in args.log {
@@ -26,11 +21,11 @@ fn rust_main(args: c_ffi::Args) -> bool {
                 Ok(value) => value,
                 Err(error) => {
                     eprintln!("record(idx={idx}) error: {error}");
-                    return false;
+                    return ExitCode::FAILURE;
                 }
             };
             if !args.count_only {
-                println!("{}", entry.text_payload);
+                println!("[{}] {}", entry.timestamp, entry.text_payload);
             }
             count += 1;
         }
@@ -38,5 +33,5 @@ fn rust_main(args: c_ffi::Args) -> bool {
 
     println!("Log entries count: {count}");
 
-    true
+    ExitCode::SUCCESS
 }

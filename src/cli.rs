@@ -9,20 +9,8 @@ pub struct Cli {
     ///Path to the json log file.
     pub log: Vec<String>,
 }
-impl Cli {
-    #[inline]
-    pub fn new<'a, T: IntoIterator<Item = &'a str>>(args: T) -> Result<Self, bool> {
-        let args = args.into_iter();
 
-        Cli::from_args(args).map_err(|err| match err.is_help() {
-            true => {
-                println!("{}", Cli::HELP);
-                false
-            },
-            false => {
-                eprintln!("{}", err);
-                true
-            },
-        })
-    }
+#[inline(always)]
+pub fn args() -> Cli {
+    arg::parse_args()
 }
